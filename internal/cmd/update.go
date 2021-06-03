@@ -55,20 +55,35 @@ Mode can be one of:
 		}
 
 		counter := int32(0)
-		var wg sync.WaitGroup
-		for _, gd := range gitDirs {
-			wg.Add(1)
 
+		// channel to send new jobs
+		ch := make(chan *StateContext)
+
+		var wg sync.WaitGroup
+
+		// create 6 worker routines
+		for i := 0; i < 6; i++ {
+			wg.Add(1)
+			go processRepository(mode, ch, &wg, "foo")
+		}
+
+		for _, gd := range gitDirs {
 			var rdIntermediate model.RepoDir
 			rdIntermediate = gd
 			sc := &StateContext{total: len(gitDirs), counter: &counter, repo: &rdIntermediate}
+			// send an operation
+			ch <- sc
 
-			if updateParallel {
-				go processRepository(mode, sc, &wg, sc.repo.PathDirName())
-			} else {
-				processRepository(mode, sc, &wg, sc.repo.PathDirName())
-			}
+			// if updateParallel {
+			// 	go processRepository(mode, ch, &wg, sc.repo.PathDirName())
+			// } else {
+			// 	processRepository(mode, ch, &wg, sc.repo.PathDirName())
+			// }
 		}
+
+		// closing the channel will end the worker routines (for loop stops)
+		close(ch)
+		// wait for the worker are signal Done in wg
 		wg.Wait()
 	},
 }
@@ -92,28 +107,31 @@ type StateContext struct {
 	message string
 }
 
-func processRepository(mode string, ctx *StateContext, wg *sync.WaitGroup, foo string) {
-	defer wg.Done()
-
-	if false {
-		time.Sleep(1 * time.Second)
-		//say.InfoLn("%s %s", ctx.repo.Name, foo)
-		return
-	}
-
-	ctx.ref = gitclient.GetCurrentBranch(ctx.repo.Path)
-	switch mode {
-	case "check":
-		updateCheck(ctx)
-	case "fetch":
-		updateFetch(ctx)
-	case "pull":
-		updateFetch(ctx)
-		if ctx.state != failed && ctx.state != clean {
-			updatePull(ctx)
+func processRepository(mode string, ch chan *StateContext, wg *sync.WaitGroup, foo string) {
+	// wait for messages in channel
+	for ctx := range ch {
+		if false {
+			time.Sleep(1 * time.Second)
+			//say.InfoLn("%s %s", ctx.repo.Name, foo)
+			return
 		}
+
+		ctx.ref = gitclient.GetCurrentBranch(ctx.repo.Path)
+		switch mode {
+		case "check":
+			updateCheck(ctx)
+		case "fetch":
+			updateFetch(ctx)
+		case "pull":
+			updateFetch(ctx)
+			if ctx.state != failed && ctx.state != clean {
+				updatePull(ctx)
+			}
+		}
+		printContext(ctx)
 	}
-	printContext(ctx)
+	// signal waitgroup that we are done
+	wg.Done()
 }
 
 func updateCheck(ctx *StateContext) {
