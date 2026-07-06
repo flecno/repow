@@ -15,8 +15,7 @@ import (
 	"repo/internal/notification"
 	"repo/internal/say"
 
-	"github.com/xanzy/go-gitlab"
-	gg "github.com/xanzy/go-gitlab"
+	gg "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func MakeHoster() (*Gitlab, error) {
@@ -26,7 +25,7 @@ func MakeHoster() (*Gitlab, error) {
 	}
 
 	var errClient error
-	result.client, errClient = gg.NewClient(config.Values.Gitlab.ApiToken, gitlab.WithBaseURL("https://"+result.Host()))
+	result.client, errClient = gg.NewClient(config.Values.Gitlab.ApiToken, gg.WithBaseURL("https://"+result.Host()))
 	if errClient != nil {
 		return nil, errClient
 	}
@@ -48,8 +47,8 @@ func (g Gitlab) Repositories(options hoster.RequestOptions) []hoster.HosterRepos
 			PerPage: 100,
 			Page:    1,
 		},
-		Archived:   gg.Bool(false),
-		Membership: gg.Bool(true),
+		Archived:   new(false),
+		Membership: new(true),
 		Starred:    &options.Starred,
 		//TODO include topics here to reduce query time
 	}
@@ -105,7 +104,7 @@ func matchesPattern(value string, patterns []string, expected bool, anyMatch boo
 	return result
 }
 
-func matches(options hoster.RequestOptions, path string, tags []string, projectAcl gitlab.AccessControlValue) bool {
+func matches(options hoster.RequestOptions, path string, tags []string, projectAcl gg.AccessControlValue) bool {
 	if projectAcl == "disabled" {
 		say.Verbose("Skipping repository with disabled git repository acl")
 		return false
@@ -265,7 +264,7 @@ func (g Gitlab) DownloadRepoyaml(remotePath string, branch string) (*model.RepoY
 
 func downloadFile(g Gitlab, remotePath string, branch string) (*gg.File, error) {
 	gfo := &gg.GetFileOptions{
-		Ref: gg.String(branch),
+		Ref: &branch,
 	}
 
 	var file *gg.File
