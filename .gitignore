@@ -15,4 +15,6 @@ bin/
 
 cmd/app/__debug*
 
+.idea/
 mise.local.toml
+

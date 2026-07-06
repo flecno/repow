@@ -22,7 +22,7 @@ type Hoster interface {
 }
 
 type HosterRepository struct {
-	Id                   int
+	Id                   int64
 	Name                 string
 	Path                 string
 	PathWithNamespace    string

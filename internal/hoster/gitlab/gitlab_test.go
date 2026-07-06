@@ -4,7 +4,7 @@ import (
 	"repo/internal/hoster"
 	"testing"
 
-	"github.com/xanzy/go-gitlab"
+	gg "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 type matchCase struct {
@@ -64,7 +64,7 @@ var matchCases = []matchCase{
 
 func TestMatches(t *testing.T) {
 	for _, test := range matchCases {
-		got := matches(test.options, test.path, test.tags, *gitlab.AccessControl("enabled"))
+		got := matches(test.options, test.path, test.tags, gg.EnabledAccessControl)
 		if got != test.expected {
 			t.Errorf("got %t, wanted %t for %v", got, test.expected, test)
 		}
