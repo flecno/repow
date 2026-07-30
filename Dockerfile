@@ -1,7 +1,6 @@
-FROM golang:1.26.1 AS build
+FROM golang:1.26.5 AS build
 
 ARG VERSION=undefinied
-
 WORKDIR /src/
 COPY cmd/ /src/cmd/
 COPY internal/ /src/internal/
@@ -12,9 +11,7 @@ WORKDIR /src/
 ENV GO111MODULE=on
 RUN make build-linux-amd
 
-FROM debian:12.13
-RUN apt-get update
-RUN apt-get install -y ca-certificates
+FROM scratch
 COPY --from=build /src/bin/repow-linux-amd64 /bin/repow
 EXPOSE 8080/tcp
 ENTRYPOINT ["/bin/repow"]
