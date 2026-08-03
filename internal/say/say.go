@@ -99,6 +99,6 @@ func ProgressErrorArray(counter *int32, total int, errs []error, name string, hy
 
 func Timer(start time.Time) {
 	func(start time.Time) {
-		InfoLn("%s Finished, took %s", Repow(), time.Since(start))
+		InfoLn("%s Finished, took %s", Repow(), time.Since(start).Round(time.Millisecond))
 	}(start)
 }

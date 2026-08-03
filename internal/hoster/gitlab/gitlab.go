@@ -351,7 +351,9 @@ func (g Gitlab) Apply(repo model.RepoMeta) error {
 	if err != nil {
 		notification.NotifyInvalidRepository(repo.RemotePath, err.Error())
 		say.Error("%s", err)
+	} else {
+		say.InfoLn("Applied settings on %s (%d)", project.PathWithNamespace, project.ID)
 	}
-	say.InfoLn("%v %v %v", project, response, err)
+	say.Verbose("%v %v %v\n", project, response, err)
 	return nil
 }
